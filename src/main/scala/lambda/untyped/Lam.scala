@@ -31,28 +31,30 @@ object Lam {
   val X = Builder(0)
   val Y = Builder(1)
   val Z = Builder(2)
-  val A = Builder(4)
-  val B = Builder(5)
+  val A = Builder(3)
+  val B = Builder(4)
 
   final case class Builder(idx: Name) extends AnyVal {
-    def v[A: Lam] = Lam.v(idx)
-    def lam[A: Lam](term: A) = Lam.lam(idx, term)
-    def app[A: Lam](term: A) = Lam.app(v, term)
+    def v[A: Lam]: A = Lam.v(idx)
+    def lam[A: Lam](term: A): A = Lam.lam(idx, term)
+    def app[A: Lam](term: A): A = Lam.app(v, term)
   }
 
-  def id[A: Lam] = X.lam(X.v)
-  def False[A: Lam] = X.lam(Y.lam(X.v))
-  def True[A: Lam] = X.lam(Y.lam(Y.v))
+  def id[A: Lam]: A = X.lam(X.v)
+  def False[A: Lam]: A = X.lam(Y.lam(X.v))
+  def True[A: Lam]: A = X.lam(Y.lam(Y.v))
 
-  def zero[A: Lam] = False
-  def one[A: Lam] = X.lam(Y.lam(X.app(Y.v)))
-  def two[A: Lam] = X.lam(Y.lam(X.app(X.app(Y.v))))
+  def zero[A: Lam]: A = False
+  def one[A: Lam]: A = X.lam(Y.lam(X.app(Y.v)))
+  def two[A: Lam]: A = X.lam(Y.lam(X.app(X.app(Y.v))))
 
-  def succ[A: Lam](n: A) = X.lam(Y.lam(X.app(app2(n, X.v, Y.v))))
-  def plus[A: Lam](a: A, b: A) = X.lam(Y.lam(app2(a, X.v, app2(b, X.v, Y.v))))
-  def add[A: Lam] = A.lam(B.lam(plus(A.v, B.v)))
-  def times[A: Lam](a: A, b: A) = app2(a, app(add, b), zero)
-  def mul[A: Lam] = A.lam(B.lam(times(A.v, B.v)))
+  def succ[A: Lam](n: A): A = X.lam(Y.lam(X.app(app2(n, X.v, Y.v))))
+  def plus[A: Lam](a: A, b: A): A = X.lam(Y.lam(app2(a, X.v, app2(b, X.v, Y.v))))
+  def add[A: Lam]: A = A.lam(B.lam(plus(A.v, B.v)))
+  def times[A: Lam](a: A, b: A): A = app2(a, app(add, b), zero)
+  def mul[A: Lam]: A = A.lam(B.lam(times(A.v, B.v)))
+  def exp[A: Lam](a: A, b: A): A = app2(b, app(mul, a), one)
+  def pow[A: Lam]: A = A.lam(B.lam(exp(A.v, B.v)))
 
   val ALPHA = "" ++ ('x' to 'z') ++ ('a' to 'w')
 
