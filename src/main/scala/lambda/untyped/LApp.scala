@@ -10,15 +10,17 @@ object LApp extends App {
   def steps(x: Term): Stream[String] =
     x.stepBN match {
       case Some(x1) => x.to[String] #:: steps(x1)
-      case None => Stream(x.to[String])
+      case None     => Stream(x.to[String])
     }
-
 
   def printsteps(x: Term) = steps(x).foreach(println)
   def printred(x: Term) = println(x.reduceBN.to[String])
 
+  def `2^4`[A: Lam] = pow ! (two, four)
+  def `5==5`[A: Lam] = eqn ! (five, five)
+  def `4!`[A: Lam] = fact ! four
 
-  printred(app2(pow[Term], two[Term], four[Term]))
-  printred(app2(eqn[Term], five[Term], five[Term]))
-  printred(app(fact[Term], four[Term]))
+  printred(`2^4`[Term])
+  printred(`5==5`[Term])
+  printred(`4!`[Term])
 }
