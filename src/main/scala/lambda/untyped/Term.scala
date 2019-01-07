@@ -6,25 +6,27 @@ import lambda.untyped.Term.{Ap, La, Vr}
 
 sealed trait Term {
   def free: Set[Name]
-  def normal: Boolean
   def subst(name: Name, term: Term) =
     if (free(name)) subst1(name, term) else this
   protected def subst1(name: Name, term: Term): Term
   def isVarApp: Boolean
 
-  def smallStepBN: Term
 
-  def reduceBN: Term = if (normal) this else smallStepBN.reduceBN
+  def stepBN: Option[Term]
+  def reduceBN: Term = stepBN match {
+    case None => this
+    case Some(term) => term.reduceBN
+  }
 
   def to[A: Lam]: A
 
   def fresh: Name
+  def isVal: Boolean
 }
 
 object Term extends TermInstance {
   final case class La(vname: Name, term: Term) extends Term {
     lazy val free: Set[Name] = term.free - vname
-    lazy val normal: Boolean = term.normal
     def subst1(name: Name, t: Term) =
       if (t.free(vname)) {
         val vn1 = term.fresh max t.fresh
@@ -32,32 +34,33 @@ object Term extends TermInstance {
       } else La(vname, term.subst(name, t))
     def isVarApp = false
 
-    def smallStepBN: Term = La(vname, term.smallStepBN)
     def to[A: Lam]: A = lam(vname, term.to[A])
     def fresh: Name = term.fresh
+    def stepBN: Option[Term] = term.stepBN.map(La(vname, _))
+    def isVal: Boolean = false
   }
   final case class Ap(f: Term, x: Term) extends Term {
     lazy val free = f.free | x.free
-    lazy val normal = f.isVarApp && x.normal
     def subst1(name: Name, term: Term) =
       Ap(f.subst(name, term), x.subst(name, term))
     def isVarApp = f.isVarApp
-    def smallStepBN: Term = f match {
-      case _ if !f.normal => Ap(f.smallStepBN, x)
-      case La(name, t) => t.subst(name, x)
-      case _ => Ap(f, x.smallStepBN)
-    }
     def to[A: Lam]: A = app(f.to[A], x.to[A])
     def fresh: Name = f.fresh max x.fresh
+    def stepBN: Option[Term] = f match {
+      case La(name, t) => Some(t.subst(name, x))
+      case _ if f.isVal => x.stepBN.map(Ap(f, _))
+      case _ => f.stepBN.map(Ap(_, x))
+    }
+    def isVal: Boolean = false
   }
   final case class Vr(vname: Name) extends Term {
     def free: Set[Name] = Set(vname)
-    def normal: Boolean = true
     protected def subst1(name: Name, term: Term): Term = term
     def isVarApp = true
-    def smallStepBN: Term = this
     def to[A: Lam]: A = vr[A](vname)
     def fresh: Name = vname + 1
+    def stepBN: Option[Term] = None
+    def isVal: Boolean = true
   }
 }
 class TermInstance {

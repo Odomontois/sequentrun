@@ -8,15 +8,17 @@ object LApp extends App {
   four[String]
 
   def steps(x: Term): Stream[String] =
-    if (x.normal) Stream(x.to[String])
-    else x.to[String] #:: steps(x.smallStepBN)
+    x.stepBN match {
+      case Some(x1) => x.to[String] #:: steps(x1)
+      case None => Stream(x.to[String])
+    }
 
+
+  def printsteps(x: Term) = steps(x).foreach(println)
   def printred(x: Term) = println(x.reduceBN.to[String])
 
-  //  println(four[Term].normal)
 
-  //  steps(app2(mul[Term], two[Term], two[Term])).foreach(println)
-  println(app2(pow[Term], two[Term], four[Term]).reduceBN.to[String])
-  printred(app2(eqn[Term], five[Term], four[Term]))
-//  printred(app(fact[Term], zero[Term]))
+  printred(app2(pow[Term], two[Term], four[Term]))
+  printred(app2(eqn[Term], five[Term], five[Term]))
+  printred(app(fact[Term], four[Term]))
 }
