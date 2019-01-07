@@ -4,86 +4,77 @@ import lambda.untyped.Lam.Name
 
 object terms {
   val Seq(x, y, z, a, b, c, d, e, f, g, h, i, rest@_ *) = Stream.from(0).map(Builder)
-  val Seq(j, k, l, m, o, p, q, r, s, t, u, v, w, _*) = rest
+  val Seq(j, k, l, m, n, o, p, q, r, s, t, u, v, w, _*) = rest
 
   final case class Builder(idx: Name) extends AnyVal {
     def v[A: Lam]: A = terms.vr(idx)
     def lam[A: Lam](term: A): A = terms.lam(idx, term)
+    def ^[A: Lam](term: A): A = lam(term)
     def app[A: Lam](term: A): A = terms.app(v, term)
+    def ![A: Lam](term: A): A = app(term)
+    def ![A: Lam](x: A, y: A): A = terms.app2(v, x, y)
   }
 
-  def abst[A: Lam](f: A => A): A = a.lam(f(a.v))
-  def abst2[A: Lam](f: (A, A) => A): A = a.lam(b.lam(f(a.v, b.v)))
+  implicit class LamApp[A](val a: A) extends AnyVal {
+    def !(x: A)(implicit A: Lam[A]): A = app(a, x)
+    def !(x: A, y: A)(implicit A: Lam[A]): A = app2(a, x, y)
+  }
 
+  implicit class Tuple2Abs(val p: (Builder, Builder)) extends AnyVal {
+    def ^[A: Lam](x: A): A = p._1 ^ (p._2 ^ x)
+  }
+
+  implicit class Tuple3Abs(val p: (Builder, Builder, Builder)) extends AnyVal {
+    def ^[A: Lam](x: A): A = p._1 ^ (p._2 ^ (p._3 ^ x))
+  }
+
+  implicit class Tuple4Abs(val p: (Builder, Builder, Builder, Builder)) extends AnyVal {
+    def ^[A: Lam](x: A): A = p._1 ^ (p._2 ^ (p._3 ^ (p._4 ^ x)))
+  }
 
   def lam[A](name: Name, term: A)(implicit lam: Lam[A]): A = lam.lam(name, term)
   def app[A](f: A, x: A)(implicit lam: Lam[A]): A = lam.app(f, x)
   def app2[A: Lam](f: A, x: A, y: A): A = app(app(f, x), y)
-  def app3[A: Lam](f: A, x: A, y: A, z: A): A = app(app2(f, x, y), z)
-  def app4[A: Lam](f: A, a: A, b: A, c: A, d: A): A = app2(app2(f, a, b), c, d)
   def vr[A](name: Name)(implicit lam: Lam[A]): A = lam.v(name)
 
   def id[A: Lam]: A = x.lam(x.v)
   def True[A: Lam]: A = x.lam(y.lam(x.v))
   def False[A: Lam]: A = x.lam(y.lam(y.v))
 
-  def bnot[A: Lam](x: A): A = app2(x, False, True)
-  def not[A: Lam]: A = abst(bnot[A])
+  def not[A: Lam]: A = x ^ (x ! (False, True))
+  def and[A: Lam]: A = (x, y) ^ (x ! (y.v, False))
+  def or[A: Lam]: A = (x, y) ^ (x ! (True, y.v))
 
-  def band[A: Lam](x: A, y: A): A = app2(x, y, False)
+  def zero[A: Lam]: A = (s, z) ^ z.v
+  def one[A: Lam]: A = (s, z) ^ (s ! z.v)
+  def two[A: Lam]: A = (s, z) ^ (s ! (s ! z.v))
+  def three[A: Lam]: A = (s, z) ^ (s ! (s ! (s ! z.v)))
+  def four[A: Lam]: A = (s, z) ^ (s ! (s ! (s ! (s ! z.v))))
+  def five[A: Lam]: A = (s, z) ^ (s ! (s ! (s ! (s ! (s ! z.v)))))
 
-  def and[A: Lam]: A = abst2(band[A])
-  def bor[A: Lam](x: A, y: A): A = app2(x, True, y)
+  def succ[A: Lam]: A = (n, s, z) ^ (s ! (n ! (s.v, z.v)))
+  def plus[A: Lam]: A = (a, b, s, z) ^ (a ! (s.v, b ! (s.v, z.v)))
+  def times[A: Lam]: A = (a, b) ^ (a ! (plus ! b.v, zero))
+  def pow[A: Lam]: A = (a, b) ^ (b ! (times ! a.v, one))
 
-  def or[A: Lam]: A = abst2(bor[A])
+  def fix[A: Lam]: A = f ^ ((x ^ (f ! (x ! x.v))) ! (x ^ (f ! (x ! x.v))))
 
-  def zero[A: Lam]: A = x.lam(y.lam(y.v))
-  def one[A: Lam]: A = x.lam(y.lam(x.app(y.v)))
-  def two[A: Lam]: A = x.lam(y.lam(x.app(x.app(y.v))))
-  def three[A: Lam]: A = x.lam(y.lam(x.app(x.app(x.app(y.v)))))
-  def four[A: Lam]: A = x.lam(y.lam(x.app(x.app(x.app(x.app(y.v))))))
-  def five[A: Lam]: A = x.lam(y.lam(x.app(x.app(x.app(x.app(x.app(y.v)))))))
+  def pair[A: Lam]: A = (f, s, p) ^ (p ! (f.v, s.v))
+  def first[A: Lam]: A = p ^ (p ! True)
+  def second[A: Lam]: A = p ^ (p ! False)
+  def Ф[A: Lam]: A = (p, z) ^ (z ! (succ ! (first ! p.v), first ! p.v))
+  def pred[A: Lam]: A = x ^ (second ! (x ! (Ф, pair ! (zero, zero))))
 
-  def succ[A: Lam](n: A): A = s.lam(z.lam(s.app(app2(n, s.v, z.v))))
-  def plus[A: Lam](a: A, b: A): A = x.lam(y.lam(app2(a, x.v, app2(b, x.v, y.v))))
-  def add[A: Lam]: A = abst2(plus[A])
-  def times[A: Lam](a: A, b: A): A = app2(a, app(add, b), zero)
-  def mul[A: Lam]: A = abst2(times[A])
-  def exp[A: Lam](a: A, b: A): A = app2(b, app(mul, a), one)
-  def pow[A: Lam]: A = abst2(exp[A])
+  def minus[A: Lam]: A = (x, y) ^ (y ! (pred, x.v))
+  def is0[A: Lam] = n ^ (n ! (x ^ False, True))
 
-  def fix[A: Lam]: A = f.lam(app(x.lam(app(f.v, app(x.v, x.v))), x.lam(app(f.v, app(x.v, x.v)))))
+  def le[A: Lam] = (x, y) ^ (is0 ! (minus ! (x.v, y.v)))
+  def ge[A: Lam] = (x, y) ^ (is0 ! (minus ! (y.v, x.v)))
+  def lt[A: Lam] = (x, y) ^ (not ! (ge ! (x.v, y.v)))
 
-  def pair[A: Lam](f: A, s: A): A = z.lam(app2(z.v, f, s))
-  def first[A: Lam](p: A): A = app(p, True)
-  def fst[A: Lam]: A = y.lam(first(y.v))
-  def second[A: Lam](p: A): A = app(p, False)
-  def snd[A: Lam]: A = y.lam(second(y.v))
+  def gt[A: Lam] = (x, y) ^ (not ! (le ! (x.v, y.v)))
 
-  def Ф[A: Lam]: A = p.lam(z.lam(app2(z.v, succ(first(p.v)), first(p.v))))
-  def prednat[A: Lam](x: A): A = second(app2(x, Ф, pair(zero, zero)))
-  def pred[A: Lam]: A = abst(prednat[A])
+  def eqn[A: Lam] = (x, y) ^ (and ! (le ! (x.v, y.v), ge ! (x.v, y.v)))
 
-  def minus[A: Lam](x: A, y: A): A = app2(y, pred, x)
-  def substract[A: Lam]: A = abst2(minus[A])
-
-  def iszero[A: Lam](n: A) = app2(n, x.lam(False), True)
-  def is0[A: Lam]: A = abst[A](iszero)
-
-  def natle[A: Lam](x: A, y: A) = iszero(minus(x, y))
-  def le[A: Lam] = abst2(natle[A])
-
-  def natge[A: Lam](x: A, y: A) = iszero(minus(y, x))
-  def ge[A: Lam]: A = abst2(natge[A])
-
-  def natlt[A: Lam](x: A, y: A) = bnot(natge(x, y))
-  def lt[A: Lam]: A = abst2(natlt[A])
-
-  def natgt[A: Lam](x: A, y: A) = bnot(natle(x, y))
-  def gt[A: Lam]: A = abst2(natgt[A])
-
-  def nateq[A: Lam](x: A, y: A) = band(natle(x, y), natge(x, y))
-  def eqn[A: Lam] = abst2(nateq[A])
-
-  def fact[A: Lam] = app(fix, r.lam(x.lam(app2(iszero(x.v), one, app2(mul, app(r.v, prednat(x.v)), x.v)))))
+  def fact[A: Lam] = fix ! ((r, x) ^ ((is0 ! x.v) ! (one, times ! (r ! (pred ! x.v), x.v))))
 }
