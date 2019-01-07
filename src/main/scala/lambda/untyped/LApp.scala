@@ -11,8 +11,12 @@ object LApp extends App {
     if (x.normal) Stream(x.to[String])
     else x.to[String] #:: steps(x.smallStepBN)
 
-  println(four[Term].normal)
+  def printred(x: Term) = println(x.reduceBN.to[String])
 
-  steps(app2(mul[Term], two[Term], two[Term])).foreach(println)
+  //  println(four[Term].normal)
+
+  //  steps(app2(mul[Term], two[Term], two[Term])).foreach(println)
   println(app2(pow[Term], two[Term], four[Term]).reduceBN.to[String])
+  printred(app2(eqn[Term], five[Term], four[Term]))
+//  printred(app(fact[Term], zero[Term]))
 }

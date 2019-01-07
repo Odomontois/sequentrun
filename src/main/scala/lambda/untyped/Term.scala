@@ -1,6 +1,6 @@
 package lambda.untyped
 
-import lambda.untyped.terms.{app, lam, v}
+import lambda.untyped.terms.{app, lam, vr}
 import lambda.untyped.Lam.Name
 import lambda.untyped.Term.{Ap, La, Vr}
 
@@ -56,7 +56,7 @@ object Term extends TermInstance {
     protected def subst1(name: Name, term: Term): Term = term
     def isVarApp = true
     def smallStepBN: Term = this
-    def to[A: Lam]: A = v[A](vname)
+    def to[A: Lam]: A = vr[A](vname)
     def fresh: Name = vname + 1
   }
 }
