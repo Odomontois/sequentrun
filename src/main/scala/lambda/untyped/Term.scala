@@ -9,15 +9,11 @@ sealed trait Term {
   def subst(name: Name, term: Term) =
     if (free(name)) subst1(name, term) else this
   protected def subst1(name: Name, term: Term): Term
-  def isVarApp: Boolean
-
-
   def stepBN: Option[Term]
   def reduceBN: Term = stepBN match {
     case None => this
     case Some(term) => term.reduceBN
   }
-
   def to[A: Lam]: A
 
   def fresh: Name
@@ -43,7 +39,6 @@ object Term extends TermInstance {
     lazy val free = f.free | x.free
     def subst1(name: Name, term: Term) =
       Ap(f.subst(name, term), x.subst(name, term))
-    def isVarApp = f.isVarApp
     def to[A: Lam]: A = app(f.to[A], x.to[A])
     def fresh: Name = f.fresh max x.fresh
     def stepBN: Option[Term] = f match {
@@ -56,7 +51,6 @@ object Term extends TermInstance {
   final case class Vr(vname: Name) extends Term {
     def free: Set[Name] = Set(vname)
     protected def subst1(name: Name, term: Term): Term = term
-    def isVarApp = true
     def to[A: Lam]: A = vr[A](vname)
     def fresh: Name = vname + 1
     def stepBN: Option[Term] = None

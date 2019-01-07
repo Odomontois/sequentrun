@@ -3,7 +3,7 @@ package lambda.untyped
 import lambda.untyped.terms._
 
 object LApp extends App {
-  def four[A: Lam] = app2[A](mul, two, two)
+  def four[A: Lam] = app2[A](times, two, two)
 
   four[String]
 
