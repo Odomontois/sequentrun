@@ -1,9 +1,9 @@
-package lambda.untyped
-
-import lambda.untyped.Lam.Name
+package lambda.untyped.simple
+import lambda.untyped.simple.Lam.Name
 
 object terms {
-  val Seq(x, y, z, a, b, c, d, e, f, g, h, i, rest@_ *) = Stream.from(0).map(Builder)
+  val Seq(x, y, z, a, b, c, d, e, f, g, h, i, rest @ _*) =
+    Stream.from(0).map(Builder)
   val Seq(j, k, l, m, n, o, p, q, r, s, t, u, v, w, _*) = rest
 
   final case class Builder(idx: Name) extends AnyVal {
@@ -28,7 +28,8 @@ object terms {
     def ^[A: Lam](x: A): A = p._1 ^ (p._2 ^ (p._3 ^ x))
   }
 
-  implicit class Tuple4Abs(val p: (Builder, Builder, Builder, Builder)) extends AnyVal {
+  implicit class Tuple4Abs(val p: (Builder, Builder, Builder, Builder))
+      extends AnyVal {
     def ^[A: Lam](x: A): A = p._1 ^ (p._2 ^ (p._3 ^ (p._4 ^ x)))
   }
 
@@ -76,5 +77,6 @@ object terms {
 
   def eqn[A: Lam] = (x, y) ^ (and ! (le ! (x.v, y.v), ge ! (x.v, y.v)))
 
-  def fact[A: Lam] = fix ! ((r, x) ^ ((is0 ! x.v) ! (one, times ! (r ! (pred ! x.v), x.v))))
+  def fact[A: Lam] =
+    fix ! ((r, x) ^ ((is0 ! x.v) ! (one, times ! (r ! (pred ! x.v), x.v))))
 }

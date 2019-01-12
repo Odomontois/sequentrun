@@ -1,8 +1,8 @@
-package lambda.untyped
+package lambda.untyped.simple
 
 import cats.Id
 import cats.arrow.FunctionK
-import lambda.untyped.Lam.{ALPHA, Name}
+import lambda.untyped.simple.Lam.{ALPHA, Name}
 
 trait Lam[A] {
   def lam(name: Name, term: A): A

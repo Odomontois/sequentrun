@@ -1,9 +1,8 @@
-package lambda.untyped
+package lambda.untyped.simple
 
 import cats.Eval
-import lambda.untyped.Lam.Name
-import cats.syntax.apply._
-import Eval.now
+import cats.Eval.now
+import Lam.Name
 import terms._
 
 sealed trait Ev[A]

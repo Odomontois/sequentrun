@@ -1,8 +1,8 @@
-package lambda.untyped
+package lambda.untyped.simple
 
-import lambda.untyped.terms.{app, lam, vr}
-import lambda.untyped.Lam.Name
-import lambda.untyped.Term.{Ap, La, Vr}
+import Lam.Name
+import Term.{Ap, La, Vr}
+import terms.{app, lam, vr}
 
 sealed trait Term {
   def free: Set[Name]

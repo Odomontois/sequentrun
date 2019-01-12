@@ -1,6 +1,6 @@
-package lambda.untyped
+package lambda.untyped.debrujin
 
-import lambda.untyped.terms._
+import terms._
 
 object LApp extends App {
   def four[A: Lam] = app2[A](times, two, two)
@@ -23,8 +23,13 @@ object LApp extends App {
   def `10=9`[A: Lam] = eqn ! (plus ! (five, five), plus ! (four, five))
   def `10=10`[A: Lam] = eqn ! (plus ! (five, five), plus ! (three, plus ! (four, three)))
 
+//  printsteps(succ[Term] ! two[Term])
+//  printred(succ[Term])
+
   printred(`2^4`[Term])
   printred(`5==5`[Term])
+  printred(`10=9`[Term])
+  printred(`10=10`[Term])
   printred(`4!`[Term])
 
   println(Ev.runInt(`8!`[Ev.Run[Int]]))
