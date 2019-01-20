@@ -3,7 +3,6 @@ package lambda.untyped.debrujin
 import terms._
 import scott._
 
-
 object LApp extends App {
   def four[A: Lam] = app2[A](times, two, two)
 
@@ -12,7 +11,7 @@ object LApp extends App {
   def steps(x: Term): Stream[String] =
     x.stepBN match {
       case Some(x1) => x.to[String] #:: steps(x1)
-      case None => Stream(x.to[String])
+      case None     => Stream(x.to[String])
     }
 
   def printsteps(x: Term) = steps(x).foreach(println)
@@ -23,7 +22,8 @@ object LApp extends App {
   def `4!`[A: Lam] = fact ! four
   def `8!`[A: Lam] = fact ! (plus ! (five, three))
   def `10=9`[A: Lam] = eqn ! (plus ! (five, five), plus ! (four, five))
-  def `10=10`[A: Lam] = eqn ! (plus ! (five, five), plus ! (three, plus ! (four, three)))
+  def `10=10`[A: Lam] =
+    eqn ! (plus ! (five, five), plus ! (three, plus ! (four, three)))
 
 //  printsteps(succ[Term] ! two[Term])
 //  printred(succ[Term])
@@ -44,4 +44,16 @@ object LApp extends App {
   printred(spred[Term] ! s2[Term])
   printred(s4[Term])
   printred(sadd[Term] ! (s2[Term], s2[Term]))
+  printred(sadd2[Term] ! (s2[Term], s2[Term]))
+
+  printred(smul[Term] ! (s2[Term], s2[Term]))
+
+  printred(smul[Term] ! (s3[Term], s2[Term]))
+  printred(smul[Term] ! (s2[Term], s3[Term]))
+
+  printred(sminus[Term] ! (s4[Term], s2[Term]))
+
+  printred(seq[Term] ! (s2[Term], s3[Term]))
+  printred(seq[Term] ! (s3[Term], s2[Term]))
+  printred(seq[Term] ! (s3[Term], s3[Term]))
 }
