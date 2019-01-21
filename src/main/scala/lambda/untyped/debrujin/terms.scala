@@ -12,7 +12,6 @@ object terms {
     def ![A: Lam](x: A, y: A): A = terms.app2(v, x, y)
   }
 
-
   def lam[A](term: A)(implicit lam: Lam[A]): A = lam.lam(term)
   def lam2[A: Lam](term: A): A = lam(lam(term))
   def lam3[A: Lam](term: A): A = lam(lam(lam(term)))
@@ -41,6 +40,8 @@ object terms {
   def times[A: Lam]: A = lam2(2 ! (plus ! 1.v, zero))
   def pow[A: Lam]: A = lam2(1 ! (times ! 2.v, one))
 
+  def ω[A: Lam]: A = lam(1 ! 1.v)
+  def Ω[A: Lam]: A = ω ! ω
   def fix[A: Lam]: A = lam(lam(2 ! (1 ! 1.v)) ! lam(2 ! (1 ! 1.v)))
 
   def pair[A: Lam]: A = lam3(1 ! (3.v, 2.v))
