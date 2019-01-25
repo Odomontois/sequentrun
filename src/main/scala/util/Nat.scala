@@ -21,12 +21,12 @@ object Nat {
 
   implicit val zeroNat: Nat[Zero] = new Nat[Zero] {
     def elim[F[_]](f: Elim[F]): F[Zero] = f.zero
-    val n: Zero                         = Zero
+    val n: Zero = Zero
   }
 
   implicit def succNat[P](implicit p: Nat[P]): Nat[Succ[P]] = new Nat[Succ[P]] {
     def elim[F[_]](f: Elim[F]): F[Succ[P]] = f.succ(p.n)
-    val n: Succ[P]                         = Succ(p.n)
+    val n: Succ[P] = Succ(p.n)
   }
 }
 
@@ -47,17 +47,17 @@ object Fin {
   }
 
   implicit def fzero[N: Nat]: Fin[N, FZero[N]] = new Fin[N, FZero[N]] {
-    val nat                                       = Nat[N]
+    val nat = Nat[N]
     def elim[F[_, _]](f: Elim[F]): F[N, FZero[N]] = f.zero[N]
-    val i: FZero[N]                               = FZero(nat.n)
+    val i: FZero[N] = FZero(nat.n)
   }
 
   implicit def fsucc[PN, PI: Fin[PN, ?]]: Fin[Succ[PN], FSucc[PN, PI]] = new Fin[Succ[PN], FSucc[PN, PI]] {
-    val pi: Fin[PN, PI]                                       = Fin[PN, PI]
-    implicit val pnat                                         = pi.nat
-    val nat                                                   = Nat[Succ[PN]]
+    val pi: Fin[PN, PI] = Fin[PN, PI]
+    implicit val pnat = pi.nat
+    val nat = Nat[Succ[PN]]
     def elim[F[_, _]](f: Elim[F]): F[Succ[PN], FSucc[PN, PI]] = f.succ(pnat.n, Fin[PN, PI].i)
-    val i                                                     = FSucc(pnat.n, Fin[PN, PI].i)
+    val i = FSucc(pnat.n, Fin[PN, PI].i)
   }
 }
 
@@ -67,7 +67,7 @@ trait BumpFin[N, I] {
 }
 
 object BumpFin {
-  type Aux[N, I, O] = BumpFin[N, I] { type Out = O }
+  type Aux[N, I, O] = BumpFin[N, I] {type Out = O}
 
   implicit def bumpZero[N: Nat]: Aux[N, FZero[N], FZero[Succ[N]]] = new BumpFin[N, FZero[N]] {
     type Out = FZero[Succ[N]]
@@ -75,10 +75,10 @@ object BumpFin {
   }
 
   implicit def bumpSucc[N, I: Fin[N, ?]](
-      implicit bump: BumpFin[N, I]): Aux[Succ[N], FSucc[N, I], FSucc[Succ[N], bump.Out]] =
+    implicit bump: BumpFin[N, I]): Aux[Succ[N], FSucc[N, I], FSucc[Succ[N], bump.Out]] =
     new BumpFin[Succ[N], FSucc[N, I]] {
       type Instance[n, a] = Fin[Succ[n], FSucc[n, a]]
-      type Out            = FSucc[Succ[N], bump.Out]
+      type Out = FSucc[Succ[N], bump.Out]
       val fin: Instance[Succ[N], bump.Out] = bump.fin.elim[Instance] {
         implicit val prevFin = bump.fin
 
@@ -91,13 +91,39 @@ object BumpFin {
     }
 }
 
+trait FinBump[N] {
+  type Out
+  def fin: Fin[Succ[N], Out]
+}
+
+object FinBump {
+  type Rec[n, i] = FinBump[n]
+  def apply[N: Nat, I: Fin[N, ?]]: FinBump[N] =
+    Fin[N, I].elim[Rec](new Fin.Elim[Rec] {
+      def zero[U: Nat]: FinBump[U] = new FinBump[U] {
+        type Out = FZero[Succ[U]]
+        val fin = Fin[Succ[U], Out]
+      }
+      def succ[PN: Nat, PI: Fin[PN, ?]](n: PN, p: PI): FinBump[Succ[PN]] = {
+        val pbump = FinBump[PN, PI]
+        implicit val pfin = pbump.fin
+        new FinBump[Succ[PN]] {
+          type Out = FSucc[Succ[PN], pbump.Out]
+          val fin = Fin[Succ[Succ[PN]], Out]
+        }
+      }
+    }
+
+    )
+}
+
 trait TopFin[N] {
   type Out
   def fin: Fin[N, Out]
 }
 
 object TopFin {
-  type Aux[N, O] = TopFin[N] { type Out = O }
+  type Aux[N, O] = TopFin[N] {type Out = O}
 
   implicit val topZero: Aux[Zero, FZero[Zero]] = new TopFin[Zero] {
     type Out = FZero[Zero]
@@ -106,7 +132,7 @@ object TopFin {
 
   implicit def topSucc[N: Nat](implicit top: TopFin[N]): Aux[Succ[N], FSucc[N, top.Out]] =
     new TopFin[Succ[N]] {
-      type Out            = FSucc[N, top.Out]
+      type Out = FSucc[N, top.Out]
       private implicit val prevFin = top.fin
       val fin = Fin[Succ[N], FSucc[N, top.Out]]
     }
