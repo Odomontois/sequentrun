@@ -2,7 +2,12 @@ package util
 import util.Nat.{Succ, Zero}
 
 trait Nat[N] {
-  def elim[F[_]](f: Nat.Elim[F]): F[N]
+  def elim[F[_]](f: Nat.Elim[F]): F[N] =
+    elimEq(new Nat.ElimEq[F, N] {
+      def zero(eq: N =~= Zero): F[Zero]                     = f.zero
+      def succ[P: Nat](n: P)(eq: N =~= Succ[P]): F[Succ[P]] = f.succ(n)
+    })
+  def elimEq[F[_]](f: Nat.ElimEq[F, N]): F[N]
   def n: N
 }
 
@@ -18,14 +23,19 @@ object Nat {
     def succ[N: Nat](n: N): F[Succ[N]]
   }
 
+  trait ElimEq[F[_], N] {
+    def zero(eq: N =~= Zero): F[Zero]
+    def succ[P: Nat](n: P)(eq: N =~= Succ[P]): F[Succ[P]]
+  }
+
   implicit val zeroNat: Nat[Zero] = new Nat[Zero] {
-    def elim[F[_]](f: Elim[F]): F[Zero] = f.zero
-    val n: Zero                         = Zero
+    def elimEq[F[_]](f: ElimEq[F, Zero]): F[Zero] = f.zero(Equals.id)
+    val n: Zero                                   = Zero
   }
 
   implicit def succNat[P](implicit p: Nat[P]): Nat[Succ[P]] = new Nat[Succ[P]] {
-    def elim[F[_]](f: Elim[F]): F[Succ[P]] = f.succ(p.n)
-    val n: Succ[P]                         = Succ(p.n)
+    def elimEq[F[_]](f: ElimEq[F, Succ[P]]): F[Succ[P]] = f.succ(p.n)(Equals.id)
+    val n: Succ[P]                                      = Succ(p.n)
   }
 }
 
