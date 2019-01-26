@@ -4,7 +4,7 @@ import util.Nat.Succ
 
 abstract class ClosedTerm[N: Nat] {
   def bump: ClosedTerm[Succ[N]]
-  //  def stepBN: Option[ClosedTerm[N]]
+  def stepBN: Option[ClosedTerm[N]]
 }
 
 object ClosedTerm {
@@ -16,15 +16,15 @@ object ClosedTerm {
     }
 
   case class Lam[N: Nat](term: ClosedTerm[Succ[N]]) extends ClosedTerm[N] {
-    def bump: ClosedTerm[Succ[N]] = Lam(term.bump)
-    //    def stepBN: Option[ClosedTerm[N]] = term.stepBN.map(Lam(_))
+    def bump: ClosedTerm[Succ[N]]     = Lam(term.bump)
+    def stepBN: Option[ClosedTerm[N]] = term.stepBN.map(Lam(_))
   }
   case class App[N: Nat](f: ClosedTerm[N], x: ClosedTerm[N]) extends ClosedTerm[N] {
     def bump: ClosedTerm[Succ[N]] = App(f.bump, x.bump)
     def stepBN: Option[ClosedTerm[N]] = f match {
-      case Lam(t) => ??? // Some(subst(t)(x))
-      //      case Vr(_) => x.stepBN.map(Ap(f, _))
-      //      case _ => f.stepBN.map(Ap(_, x))
+      case Lam(t) => Some(subst(t)(x))
+      case Var(_) => x.stepBN.map(App(f, _))
+      case _      => f.stepBN.map(App(_, x))
     }
   }
 
@@ -33,9 +33,7 @@ object ClosedTerm {
     Var(f)
   }
   case class Var[N: Nat](fin: Fin[N]) extends ClosedTerm[N]() {
-    def bump: ClosedTerm[Succ[N]] = mkVar[Succ[N]](Fin.bump(fin))
-
-//    def substWith(t: Term)
-    //    def stepBN: Option[ClosedTerm[N]] = None
+    def bump: ClosedTerm[Succ[N]]     = mkVar[Succ[N]](Fin.bump(fin))
+    def stepBN: Option[ClosedTerm[N]] = None
   }
 }
