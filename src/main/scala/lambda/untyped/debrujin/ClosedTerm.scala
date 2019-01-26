@@ -1,6 +1,5 @@
 package lambda.untyped.debrujin
-import util.Fin.{FSucc, FZero}
-import util.{Fin, FinBump, Nat}
+import util.{Fin, Nat}
 import util.Nat.Succ
 
 abstract class ClosedTerm[N: Nat] {
@@ -9,12 +8,12 @@ abstract class ClosedTerm[N: Nat] {
 }
 
 object ClosedTerm {
-    def subst[N : Nat](t: ClosedTerm[Succ[N]])(sub: ClosedTerm[N]): ClosedTerm[N] =
-      t match {
-        case Lam(body) => Lam(subst[Succ[N]](body)(sub.bump))
-        case App(f, x) => App(subst(f)(sub), subst(x)(sub))
-        case Var() =>
-      }
+  def subst[N: Nat](t: ClosedTerm[Succ[N]])(sub: ClosedTerm[N]): ClosedTerm[N] =
+    t match {
+      case Lam(body) => Lam(subst[Succ[N]](body)(sub.bump))
+      case App(f, x) => App(subst(f)(sub), subst(x)(sub))
+      case Var(idx)  => Fin.unbump[N](idx).fold(sub)(Var(_))
+    }
 
   case class Lam[N: Nat](term: ClosedTerm[Succ[N]]) extends ClosedTerm[N] {
     def bump: ClosedTerm[Succ[N]] = Lam(term.bump)
@@ -28,13 +27,15 @@ object ClosedTerm {
       //      case _ => f.stepBN.map(Ap(_, x))
     }
   }
-  case class Var[N: Nat, I: Fin[N, ?]]() extends ClosedTerm[N]()(Fin[N, I].nat) {
-    def bump: ClosedTerm[Succ[N]] = {
-      val bumped = FinBump[N, I]
-      import bumped.fin
-      Var[Succ[N], bumped.Out]
-    }
-    def substWith(t: Term)
+
+  def mkVar[N](f: Fin[N]): Var[N] = {
+    import f.nat
+    Var(f)
+  }
+  case class Var[N: Nat](fin: Fin[N]) extends ClosedTerm[N]() {
+    def bump: ClosedTerm[Succ[N]] = mkVar[Succ[N]](Fin.bump(fin))
+
+//    def substWith(t: Term)
     //    def stepBN: Option[ClosedTerm[N]] = None
   }
 }
