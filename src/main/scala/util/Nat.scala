@@ -128,7 +128,7 @@ object CompareSubst {
         new Nat.ElimEq[CompareSubst, N] {
           override def zero(eq: N =~= Zero): CompareSubst[Zero] = EQ()
           override def succ[P: Nat](n: P)(eq: N =~= Succ[P]): CompareSubst[Succ[P]] =
-            CompareSubst[P](eq.subst(px), eq.subst(py)).succ
+            CompareSubst[P](eq(px), eq(py)).succ
         }.elim
     }
 }
