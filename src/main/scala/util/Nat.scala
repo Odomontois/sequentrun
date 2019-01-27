@@ -1,5 +1,9 @@
 package util
+import cats.Show
+import cats.kernel.Order
+import util.CompareSubst.{EQ, GT, LT}
 import util.Nat.{Succ, Zero}
+import util.Fin.{FSucc, FZero}
 
 trait Nat[N] {
   def elim[F[_]](f: Nat.Elim[F]): F[N] =
@@ -21,11 +25,15 @@ object Nat {
   trait Elim[F[_]] {
     def zero: F[Zero]
     def succ[N: Nat](n: N): F[Succ[N]]
+
+    def elim[N: Nat]: F[N] = Nat[N].elim(this)
   }
 
   trait ElimEq[F[_], N] {
     def zero(eq: N =~= Zero): F[Zero]
     def succ[P: Nat](n: P)(eq: N =~= Succ[P]): F[Succ[P]]
+
+    def elim(implicit N: Nat[N]): F[N] = N.elimEq(this)
   }
 
   implicit val zeroNat: Nat[Zero] = new Nat[Zero] {
@@ -65,12 +73,62 @@ object Fin {
     fin match {
       case FZero() => Some(FZero[N]())
       case FSucc(p) =>
-        val f = Nat[N].elim[IsTopRec](
-          new Nat.Elim[IsTopRec] {
-            def zero: Fin[Zero] => Option[Fin[Zero]]                     = _ => None
-            def succ[U: Nat](n: U): Fin[Succ[U]] => Option[Fin[Succ[U]]] = p => unbump(p).map(FSucc(_))
-          }
-        )
+        val f = new Nat.Elim[IsTopRec] {
+          def zero: Fin[Zero] => Option[Fin[Zero]]                     = _ => None
+          def succ[U: Nat](n: U): Fin[Succ[U]] => Option[Fin[Succ[U]]] = p => unbump(p).map(FSucc(_))
+        }.elim[N]
         f(p)
+    }
+
+  def toInt[N: Nat](fin: Fin[N]): Int = fin match {
+    case FZero() => 0
+    case FSucc(p) =>
+      import p.nat
+      toInt(p) + 1
+  }
+
+  implicit def order[N: Nat]: Order[Fin[N]] =
+    new Nat.Elim[λ[n => Order[Fin[n]]]] {
+      def zero = (x, y) => 0
+      def succ[P: Nat](n: P) =
+        (x, y) =>
+          CompareSubst(x, y) match {
+            case LT(_) => -1
+            case EQ()  => 0
+            case GT(_) => 1
+        }
+    }.elim[N]
+}
+
+sealed abstract class CompareSubst[N: Nat] {
+  def succ: CompareSubst[Succ[N]]
+}
+
+object CompareSubst {
+  final case class LT[N: Nat](x: Fin[N]) extends CompareSubst[N] {
+    def succ = LT(FSucc(x))
+  }
+  final case class EQ[N: Nat]() extends CompareSubst[N] {
+    def succ = EQ()
+  }
+  final case class GT[N: Nat](x: Fin[N]) extends CompareSubst[N] {
+    def succ = GT(FSucc(x))
+  }
+
+  /** comparison of two `Fin[Succ[n]]`
+    * if x < y then x should be Fin[N]
+    * if x == y then just return it
+    * if x > y then x - 1 should be Fin[N]*/
+  def apply[N: Nat](x: Fin[Succ[N]], y: Fin[Succ[N]]): CompareSubst[N] =
+    (x, y) match {
+      case (FZero(), FZero())  => EQ()
+      case (FZero(), FSucc(_)) => LT(FZero())
+      case (FSucc(p), FZero()) => GT(p)
+      case (FSucc(px), FSucc(py)) =>
+        new Nat.ElimEq[CompareSubst, N] {
+          override def zero(eq: N =~= Zero): CompareSubst[Zero] = EQ()
+          override def succ[P: Nat](n: P)(eq: N =~= Succ[P]): CompareSubst[Succ[P]] =
+            CompareSubst[P](eq.subst(px), eq.subst(py)).succ
+        }.elim
     }
 }
