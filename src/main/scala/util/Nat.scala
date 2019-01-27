@@ -39,7 +39,7 @@ object Nat {
   }
 }
 
-abstract class Fin[N](implicit val nat: Nat[N])
+sealed abstract class Fin[N](implicit val nat: Nat[N])
 
 object Fin {
   final case class FZero[N: Nat]()             extends Fin[N]
