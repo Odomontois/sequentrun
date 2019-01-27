@@ -86,6 +86,7 @@ object Closed {
 
   def Cadd[N: Nat]: Closed[N] = lam2(app2(v0, Csucc, v1))
   def Cmul[N: Nat]: Closed[N] = lam2(app2(v0, App(Cadd, v1), C0))
+  def Cpow[N: Nat]: Closed[N] = lam2(app2(v0, App(Cmul, v1), C1))
 
   implicit def show[N: Nat]: Show[Closed[N]] = {
     case Lam(t)    => show"λ.$t"
