@@ -1,6 +1,6 @@
 package lambda.stlc
 import cats.kernel.Comparison.EqualTo
-import lambda.stlc.Elem.Here
+import lambda.stlc.Elem.{Here, There}
 import lambda.stlc.Env.{:::, Elim, ElimEq, Empty}
 import util._
 
@@ -61,11 +61,11 @@ object Elem {
     def there[H: Type, Tail: Env](elem: Elem[T, Tail], eqs: E ~= (H ::: Tail)): R
   }
 
-  final case class Here[T: Type, E: Env](t: T, env: E) extends Elem[T, T ::: E] {
+  final case class Here[T: Type, E: Env]() extends Elem[T, T ::: E] {
     def get(e: T ::: E): T                   = e.head
     def elim[R](e: ElimEq[T, T ::: E, R]): R = e.here(Equals.id[T ::: E])
   }
-  final case class There[T: Type, E: Env, H: Type](t: T, env: E, elem: Elem[T, E]) extends Elem[T, H ::: E] {
+  final case class There[T: Type, E: Env, H: Type](elem: Elem[T, E]) extends Elem[T, H ::: E] {
     def get(e: H ::: E): T                   = elem.get(e.tail)
     def elim[R](e: ElimEq[T, H ::: E, R]): R = e.there[H, E](elem, Equals.id[H ::: E])
   }
@@ -87,4 +87,16 @@ object SubSet {
         }
       }
   }
+
+  def rightWeak[H: Type, E: Env, E1: Env](subSet: SubSet[E, E1]): SubSet[E, H ::: E1] =
+    new SubSet[E, H ::: E1] {
+      def find[T: Type](elem: Elem[T, E]): Elem[T, H ::: E1] =
+        There(subSet.find[T](elem))
+    }
+
+  def leftWeak[H: Type, E: Env, E1: Env](subSet: SubSet[H ::: E, E1]): SubSet[E, E1] =
+    new SubSet[E, E1] {
+      def find[T: Type](elem: Elem[T, E]): Elem[T, E1] =
+        subSet.find(There(elem))
+    }
 }
