@@ -4,23 +4,18 @@ trait Disjoint { type Tag }
 
 trait Lem[T] extends Disjoint {
   type Tag = T
-  def lem: (T => Nothing) => T => Nothing
+  def lem: (T => Nothing) => T => Nothing = identity
 
-  def absurd[T](x: HasTag[Tag], y: HasNotTag[Tag]): Nothing =
-    x.lem(y.notTag)(x.tag)
+  def absurd[T](x: HasTag[Tag], y: HasNotTag[Tag]): Nothing = x.lem(y.notTag)(x.tag)
 }
 
 trait HasTag[T] extends Lem[T] {
   def tag: T
-  def lem = nt => t => nt(tag)
-
   def hasTag: HasTag[Tag] = this
 }
 
 trait HasNotTag[T] extends Lem[T] {
   def notTag: T => Nothing
-  def lem = nt => t => notTag(t)
-
   def hasNotTag: HasNotTag[Tag] = this
 }
 
