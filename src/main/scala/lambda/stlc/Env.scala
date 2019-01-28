@@ -1,7 +1,8 @@
 package lambda.stlc
 import cats.kernel.Comparison.EqualTo
+import lambda.stlc.Elem.Here
 import lambda.stlc.Env.{:::, Elim, ElimEq, Empty}
-import util.{Equals, ~=}
+import util._
 
 trait Env[E] {
   def elimEq[F[_]](elim: ElimEq[F, E]): F[E]
@@ -19,16 +20,9 @@ object Env {
   def apply[T](implicit env: Env[T]): Env[T] = env
 
   type Empty = Empty.type
-  sealed trait EnvBase[Tail] {
-    def lem(notTail: Tail => Nothing, tail: Tail): Nothing
-  }
 
-  case object Empty extends EnvBase[Nothing] {
-    def lem(notTail: Nothing => Nothing, tail: Nothing): Nothing = tail
-  }
-  final case class :::[H: Type, T: Env](head: H, tail: T) extends EnvBase[T] {
-    def lem(notTail: T => Nothing, tail: T): Nothing = ???
-  }
+  case object Empty                                       extends LeftVariant
+  final case class :::[H: Type, T: Env](head: H, tail: T) extends RightVariant
 
   trait ElimEq[F[_], E] {
     def empty(eq: E ~= Empty): F[Empty]
@@ -56,15 +50,24 @@ object Env {
 }
 
 sealed abstract class Elem[T: Type, E: Env] {
+  type Ev = E
   def get(e: E): T
+  def elim[R](e: Elem.ElimEq[T, E, R]): R
 }
 
 object Elem {
-  final case class Here[T: Type, E: Env]() extends Elem[T, T ::: E] {
-    def get(e: T ::: E): T = e.head
+  trait ElimEq[T, E, R] {
+    def here[Tail: Env](eqs: E ~= (T ::: Tail)): R
+    def there[H: Type, Tail: Env](elem: Elem[T, Tail], eqs: E ~= (H ::: Tail)): R
   }
-  final case class There[T: Type, E: Env, H: Type](elem: Elem[T, E]) extends Elem[T, H ::: E] {
-    def get(e: H ::: E): T = elem.get(e.tail)
+
+  final case class Here[T: Type, E: Env](t: T, env: E) extends Elem[T, T ::: E] {
+    def get(e: T ::: E): T                   = e.head
+    def elim[R](e: ElimEq[T, T ::: E, R]): R = e.here(Equals.id[T ::: E])
+  }
+  final case class There[T: Type, E: Env, H: Type](t: T, env: E, elem: Elem[T, E]) extends Elem[T, H ::: E] {
+    def get(e: H ::: E): T                   = elem.get(e.tail)
+    def elim[R](e: ElimEq[T, H ::: E, R]): R = e.there[H, E](elem, Equals.id[H ::: E])
   }
 }
 
@@ -73,5 +76,15 @@ trait SubSet[E, E1] {
 }
 
 object SubSet {
-  def emptyIsSubset[L: Env]: SubSet[Empty, L] = ???
+  def emptyIsSubset[L: Env]: SubSet[Empty, L] = new SubSet[Empty, L] {
+    def find[T: Type](elem: Elem[T, Empty]): Elem[T, L] =
+      elem.elim {
+        new Elem.ElimEq[T, Empty, Elem[T, L]] {
+          def here[Tail: Env](eqs: Empty ~= (T ::: Tail)): Elem[T, L] =
+            Disjoint.absurd(eqs[λ[a => Empty with a]](Empty))
+          def there[H: Type, Tail: Env](elem: Elem[T, Tail], eqs: Empty ~= (H ::: Tail)): Elem[T, L] =
+            Disjoint.absurd(eqs[λ[a => Empty with a]](Empty))
+        }
+      }
+  }
 }

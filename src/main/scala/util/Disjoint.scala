@@ -27,9 +27,6 @@ trait RightVariant extends HasTag[Unit] {
   def tag = ()
 }
 
-object Lem {
-  private def absurd0[T](x: HasTag[T], y: HasNotTag[T]): Nothing =
-    x.lem(y.notTag)(x.tag)
-
+object Disjoint {
   def absurd(x: LeftVariant with RightVariant): Nothing = x.absurd(x.hasTag, x.hasNotTag)
 }
