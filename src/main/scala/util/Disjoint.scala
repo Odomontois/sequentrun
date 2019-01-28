@@ -2,19 +2,17 @@ package util
 
 trait Disjoint { type Tag }
 
-trait Lem[T] extends Disjoint {
+trait DisjointAbsurd[T] extends Disjoint {
   type Tag = T
-  def nonContradiction: (T => Nothing) => T => Nothing = identity
-
-  def absurd(x: HasTag[Tag], y: HasNotTag[Tag]): Nothing = x.nonContradiction(y.notTag)(x.tag)
+  def absurd(x: HasTag[Tag], y: HasNotTag[Tag]): Nothing = y.notTag(x.tag)
 }
 
-trait HasTag[T] extends Lem[T] {
+trait HasTag[T] extends DisjointAbsurd[T] {
   def tag: T
   def hasTag: HasTag[Tag] = this
 }
 
-trait HasNotTag[T] extends Lem[T] {
+trait HasNotTag[T] extends DisjointAbsurd[T] {
   def notTag: T => Nothing
   def hasNotTag: HasNotTag[Tag] = this
 }
