@@ -19,8 +19,16 @@ object Env {
   def apply[T](implicit env: Env[T]): Env[T] = env
 
   type Empty = Empty.type
-  case object Empty
-  final case class :::[H: Type, T: Env](head: H, tail: T)
+  sealed trait EnvBase[Tail] {
+    def lem(notTail: Tail => Nothing, tail: Tail): Nothing
+  }
+
+  case object Empty extends EnvBase[Nothing] {
+    def lem(notTail: Nothing => Nothing, tail: Nothing): Nothing = tail
+  }
+  final case class :::[H: Type, T: Env](head: H, tail: T) extends EnvBase[T] {
+    def lem(notTail: T => Nothing, tail: T): Nothing = ???
+  }
 
   trait ElimEq[F[_], E] {
     def empty(eq: E ~= Empty): F[Empty]
