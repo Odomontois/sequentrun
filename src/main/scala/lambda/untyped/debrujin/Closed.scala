@@ -25,8 +25,8 @@ object Closed {
       case App(f, x) => App(subst(f, i)(sub), subst(x, i)(sub))
       case Var(idx) =>
         Nat[N].elimEq(new Nat.ElimEq[Closed, N] {
-          override def zero(eq: N =~= Zero): Closed[Zero] = eq(sub)
-          override def succ[P: Nat](n: P)(eq: N =~= Succ[P]): Closed[Succ[P]] =
+          override def zero(eq: N ~= Zero): Closed[Zero] = eq(sub)
+          override def succ[P: Nat](n: P)(eq: N ~= Succ[P]): Closed[Succ[P]] =
             CompareSubst(eq.apply(idx), eq.apply(i)) match {
               case LT(p) => Var(p)
               case EQ()  => eq(sub)

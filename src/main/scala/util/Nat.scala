@@ -8,8 +8,8 @@ import util.Fin.{FSucc, FZero}
 trait Nat[N] {
   def elim[F[_]](f: Nat.Elim[F]): F[N] =
     elimEq(new Nat.ElimEq[F, N] {
-      def zero(eq: N =~= Zero): F[Zero]                     = f.zero
-      def succ[P: Nat](n: P)(eq: N =~= Succ[P]): F[Succ[P]] = f.succ(n)
+      def zero(eq: N ~= Zero): F[Zero]                     = f.zero
+      def succ[P: Nat](n: P)(eq: N ~= Succ[P]): F[Succ[P]] = f.succ(n)
     })
   def elimEq[F[_]](f: Nat.ElimEq[F, N]): F[N]
   def n: N
@@ -30,8 +30,8 @@ object Nat {
   }
 
   trait ElimEq[F[_], N] {
-    def zero(eq: N =~= Zero): F[Zero]
-    def succ[P: Nat](n: P)(eq: N =~= Succ[P]): F[Succ[P]]
+    def zero(eq: N ~= Zero): F[Zero]
+    def succ[P: Nat](n: P)(eq: N ~= Succ[P]): F[Succ[P]]
 
     def elim(implicit N: Nat[N]): F[N] = N.elimEq(this)
   }
@@ -126,8 +126,8 @@ object CompareSubst {
       case (FSucc(p), FZero()) => GT(p)
       case (FSucc(px), FSucc(py)) =>
         new Nat.ElimEq[CompareSubst, N] {
-          override def zero(eq: N =~= Zero): CompareSubst[Zero] = EQ()
-          override def succ[P: Nat](n: P)(eq: N =~= Succ[P]): CompareSubst[Succ[P]] =
+          override def zero(eq: N ~= Zero): CompareSubst[Zero] = EQ()
+          override def succ[P: Nat](n: P)(eq: N ~= Succ[P]): CompareSubst[Succ[P]] =
             CompareSubst[P](eq(px), eq(py)).succ
         }.elim
     }
