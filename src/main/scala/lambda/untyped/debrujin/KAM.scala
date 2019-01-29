@@ -1,6 +1,6 @@
 package lambda.untyped.debrujin
 import lambda.untyped.debrujin.Term.La
-import util.iter
+import lib.iter
 import terms._
 import scott._
 

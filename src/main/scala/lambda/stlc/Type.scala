@@ -1,6 +1,6 @@
 package lambda.stlc
 import lambda.stlc.Type.{-->, Elim, ElimEq, ⍟}
-import util.{~=, Equals}
+import lib.{~=, Equals}
 
 trait Type[T] {
   def elimEq[F[_]](elim: ElimEq[F, T]): F[T]

@@ -1,9 +1,9 @@
-package util
+package lib
 import cats.Show
 import cats.kernel.Order
-import util.CompareSubst.{EQ, GT, LT}
-import util.Nat.{Succ, Zero}
-import util.Fin.{FSucc, FZero}
+import lib.CompareSubst.{EQ, GT, LT}
+import lib.Nat.{Succ, Zero}
+import lib.Fin.{FSucc, FZero}
 
 trait Nat[N] {
   def elim[F[_]](f: Nat.Elim[F]): F[N] =

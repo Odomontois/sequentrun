@@ -1,4 +1,4 @@
-package util
+package lib
 
 trait Equals[A, B] {
   def apply[F[_]](f: F[A]): F[B]

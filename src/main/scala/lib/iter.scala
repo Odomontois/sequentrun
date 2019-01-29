@@ -1,4 +1,4 @@
-package util
+package lib
 import cats.Monoid
 import cats.syntax.monoid._
 import cats.instances.unit._

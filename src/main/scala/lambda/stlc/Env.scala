@@ -2,7 +2,7 @@ package lambda.stlc
 import cats.kernel.Comparison.EqualTo
 import lambda.stlc.Elem.{Here, There}
 import lambda.stlc.Env.{:::, Elim, ElimEq, Empty}
-import util._
+import lib._
 
 trait Env[E] {
   def elimEq[F[_]](elim: ElimEq[F, E]): F[E]

@@ -1,4 +1,4 @@
-package util
+package lib
 
 trait Disjoint { type Tag }
 

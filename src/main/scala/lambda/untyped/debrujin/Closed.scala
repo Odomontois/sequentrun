@@ -3,10 +3,10 @@ import cats.Show
 import cats.syntax.show._
 import cats.syntax.order._
 import cats.instances.int.catsStdShowForInt
-import util.CompareSubst.{EQ, GT, LT}
-import util.Fin.{FSucc, FZero}
-import util._
-import util.Nat.{Succ, Zero}
+import lib.CompareSubst.{EQ, GT, LT}
+import lib.Fin.{FSucc, FZero}
+import lib._
+import lib.Nat.{Succ, Zero}
 
 abstract class Closed[N: Nat] {
   def bumpOver(idx: Fin[N]): Closed[Succ[N]]
